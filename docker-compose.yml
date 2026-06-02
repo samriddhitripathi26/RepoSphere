@@ -1,0 +1,18 @@
+services:
+  reposphere:
+    build: .
+    image: reposphere:latest
+    container_name: reposphere
+    restart: unless-stopped
+    ports:
+      - "8765:8765"
+    environment:
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:?set GITHUB_CLIENT_ID in env or .env}
+      GITHUB_OAUTH_SCOPES: ${GITHUB_OAUTH_SCOPES:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_DIGEST_MODEL: ${OPENAI_DIGEST_MODEL:-}
+    volumes:
+      - reposphere-data:/home/node/.reposphere
+
+volumes:
+  reposphere-data:
