@@ -1,278 +1,280 @@
 # RepoSphere
 
-> The initial scaffolding of this repository was produced in an AI-assisted session with [Claude Code](https://claude.com/claude-code). From here on, code is reviewed and maintained by humans, and contributions are welcome.
+**A unified repository intelligence dashboard for GitHub and Forgejo ecosystems.**
 
-<p align="center">
-  <a href="https://discord.gg/YrZPHAwMSG"><img src="https://img.shields.io/discord/1470772941296894128?color=5865F2&logo=discord&logoColor=white&label=Discord" alt="Discord" /></a>
-</p>
+RepoSphere helps developers, maintainers, and teams monitor repositories, track development activity, review project health, and manage issues from a single interface.
 
-<p align="center">
-  <a href="https://repostars.dev/?repos=debba%2Fgh-dashboard&theme=dark"><img src="https://repostars.dev/api/embed?repo=debba%2Fgh-dashboard&theme=dark" alt="RepoStars" /></a>
-</p>
+---
 
-An open-source, local dashboard to explore repositories, issues, pull requests, traffic, and CI activity across multiple accounts on GitHub and Forgejo-compatible forges (Codeberg, self-hosted) — from a single interface.
+## Overview
 
-## Demo
+Managing multiple repositories across organizations can quickly become overwhelming. RepoSphere centralizes repository management by bringing together project insights, pull requests, issues, security findings, workflow activity, and analytics into one dashboard.
 
-<div align="center">
-  <img src="public/demo.gif" alt="RepoSphere demo" />
-</div>
+Whether you're maintaining open-source projects or coordinating development across teams, RepoSphere provides a clear view of what requires attention.
 
-## What it does
+---
 
-The dashboard pulls data from the GitHub REST and GraphQL APIs and organizes it into a few different views:
+## Key Features
 
-- **Repositories** — paginated grid with description, language, stars, forks, open issues, last push and a per-repo health score. Filter by organization, language, visibility, forks/archived; sort by stars, recent activity, etc.
-- **Issues / Pull Requests** — cross-repo lists with the same filter sidebar, useful for triage across many projects.
-- **Insights** — overview of all repos with alerts ("issues need attention", "security alerts need attention", "no push for X days"), opportunities, and correlations between traffic and recent activity. Each repo gets a status (Strong / Watch / Risky).
-- **Alerts** — dedicated security-alert view for Dependabot and code scanning findings, so you can jump straight to the repos that need attention.
-- **Daily digest** — short per-repo summary of the day's movement (stars, forks, issues), with an executive summary you can copy as Markdown. Optionally augmented by an OpenAI-generated narrative when `OPENAI_API_KEY` is configured.
-- **Board** — Kanban-style view that groups issues into columns (Backlog, To-do, In progress, Ready, In review, etc.).
+### Repository Explorer
 
-### Per-repository view
+Browse repositories with detailed information including:
 
-Open any repository to see:
+* Repository descriptions
+* Programming languages
+* Star and fork counts
+* Open issues
+* Recent activity
+* Visibility status
+* Repository health indicators
 
-- **Overview** — stars, forks, open issues, owner, license, default branch, last push.
-- **Security and quality** — Dependabot and code scanning alert summaries for the repository, with a fallback note when GitHub does not expose the data.
-- **Actions** — recent workflow runs.
-- **PRs** and **Issues** — open and recent items, paginated.
-- **Releases** — release history.
-- **Forks** — list of forks, sortable by most stars or recent push.
-- **Traffic** — views and clones for the last 14 days, unique visitors/cloners, top referrers, popular paths.
-- **Mentions** — references to the repo found via GitHub code/issue search, including previous names of the project.
-- **Dependents** — repository relationships, where available.
-- **Languages and trend charts** — language breakdown and stars/forks history.
-- **Contributors** — paginated list with commit counts.
+### Issue & Pull Request Management
 
-## Architecture
+Track issues and pull requests across multiple repositories without switching between projects.
 
-The app is a single repository with two cooperating processes:
+Features include:
 
-- **Backend** — a Node HTTP server (`src/server.ts` + `src/server/*`) that handles GitHub OAuth (Device Flow), proxies all REST/GraphQL calls, caches responses on disk, and exposes a small JSON API under `/api/*`. The GitHub token is stored locally under `~/.reposphere/` and **never exposed to the browser**.
-- **Frontend** — a React 19 + Vite SPA (`src/main.tsx`, `src/App.tsx`, `src/components/*`, `src/api/*`) that consumes the backend's `/api/*` endpoints.
+* Cross-repository filtering
+* Status tracking
+* Organization-based filtering
+* Quick triage workflows
 
-In production both are served by the Node process: Vite builds the SPA into `dist/client/` and the server falls back to `index.html` for non-API routes.
+### Security Center
 
-### Tech stack
+Stay informed about repository security through:
 
-| Layer       | Tech                                           |
-| ----------- | ---------------------------------------------- |
-| Language    | TypeScript                                     |
-| Frontend    | React 19, Vite 8                               |
-| Backend     | Node `http` + `tsx` watch (dev), compiled JS in production |
-| Tests       | Vitest + jsdom                                 |
-| Tooling     | `concurrently`, `tsc`                          |
+* Dependabot alerts
+* Code scanning findings
+* Security summaries
+* Risk visibility across projects
 
-### Translations
+### Insights Dashboard
 
-UI translations live in `src/i18n/`, with one dictionary file per language. See [docs/translations.md](docs/translations.md) for the workflow to edit text or add another language.
+Generate actionable insights based on repository activity:
 
-## Prerequisites
+* Projects needing attention
+* Inactive repositories
+* Security concerns
+* Contribution trends
+* Development opportunities
 
-- **Node.js 20+** (anything that supports native `fetch` and ESM is fine).
-- A **GitHub OAuth App** with **Device Flow enabled** (see next section).
-- (Optional) An **OpenAI API key** if you want AI-generated daily digest summaries.
+### Activity Digest
 
-## Configure GitHub
+Generate daily project summaries covering:
 
-The dashboard talks to GitHub using a personal **OAuth App** with the **Device Authorization Flow**. This means you keep ownership of the credentials and there is no client secret to manage. You only have to do this once.
+* New issues
+* Pull requests
+* Repository growth
+* Traffic changes
+* Contributor activity
 
-### 1. Create the OAuth App
+Optional AI-powered summaries are available when an OpenAI API key is configured.
 
-1. Go to <https://github.com/settings/developers> → **OAuth Apps** → **New OAuth App**.
-   (For an org-owned app, use **Settings → Developer settings → OAuth Apps** on the organization instead.)
-2. Fill in the form:
-   - **Application name** — anything, e.g. `RepoSphere (local)`.
-   - **Homepage URL** — `http://127.0.0.1:8765` (or any URL you control; this is informational).
-   - **Authorization callback URL** — `http://127.0.0.1:8765` will do. Device Flow does not actually use a redirect, but GitHub requires the field.
-3. Click **Register application**.
+### Project Board
 
-### 2. Enable Device Flow
+Visual Kanban-style workflow management with customizable stages:
 
-On the OAuth App's settings page, tick **Enable Device Flow** and **Update application**. This is required — without it, sign-in will fail with `unsupported_grant_type`.
+* Backlog
+* To Do
+* In Progress
+* Review
+* Ready
+* Completed
 
-### 3. Copy the Client ID
+---
 
-You only need the **Client ID** (it looks like `Iv1.xxxxxxxxxxxxxxxx` or `Ov23li...`). **Do not** generate a client secret — Device Flow does not use one, and the dashboard never reads it.
+## Repository Analytics
 
-### 4. Export it before starting the server
+Each repository includes detailed analytics such as:
 
-```bash
-export GITHUB_CLIENT_ID=Iv1.xxxxxxxxxxxxxxxx
-```
+### General Information
 
-You can also put it in a `.env` file or your shell profile. The server reads `process.env.GITHUB_CLIENT_ID` at startup and will refuse to start the OAuth flow without it.
+* Repository owner
+* License details
+* Default branch
+* Last updated date
 
-### 5. Sign in from the UI
+### Development Activity
 
-When you open the dashboard for the first time, it will:
+* Pull requests
+* Issues
+* Releases
+* Contributors
 
-1. call the backend, which asks GitHub for a **device code**;
-2. show you a short **user code** and a verification URL (typically <https://github.com/login/device>);
-3. you paste the code on GitHub and approve the requested scopes;
-4. the backend exchanges the device code for an access token and stores it in `~/.reposphere/` — **the token never reaches the browser**.
+### Security & Quality
 
-Granted scopes default to `repo read:org project read:user user:email`. To narrow them, set `GITHUB_OAUTH_SCOPES` (see [Configuration](#configuration)). If you ever want to revoke access, remove the app from <https://github.com/settings/applications> and delete the local token file under `~/.reposphere/`.
+* Vulnerability alerts
+* Code scanning results
+* Dependency health
 
-## Configuration
+### Traffic Metrics
 
-The server reads its configuration from environment variables:
+* Repository views
+* Clone statistics
+* Visitor analytics
+* Popular content
 
-| Variable               | Required | Default                                        | Purpose                                          |
-| ---------------------- | -------- | ---------------------------------------------- | ------------------------------------------------ |
-| `GH_AUTH_MODE`         | no       | `device`                                       | Auth source: `device` (OAuth Device Flow), `gh-cli` (reuse local `gh` CLI), or `token` (use `GITHUB_TOKEN`). Aliases accepted: `GITHUB_AUTH_MODE`, `GITHUB_MODE`. |
-| `GITHUB_CLIENT_ID`     | only `device` | —                                         | Client ID of your GitHub OAuth App (Device Flow) |
-| `GITHUB_OAUTH_SCOPES`  | no       | `repo read:org project read:user user:email`   | OAuth scopes requested at sign-in (Device Flow)  |
-| `GITHUB_TOKEN`         | only `token` | —                                          | Personal access token used when `GH_AUTH_MODE=token` |
-| `HOST`                 | no       | `127.0.0.1`                                    | Interface the server binds to                    |
-| `PORT`                 | no       | `8765`                                         | Port the server listens on                       |
-| `OPENAI_API_KEY`       | no       | —                                              | Enables AI-generated daily digest narratives     |
-| `OPENAI_DIGEST_MODEL`  | no       | `gpt-4.1-mini`                                 | Model used for digest narratives                 |
+### Community Insights
 
-### Authentication modes
+* Fork analysis
+* Repository mentions
+* Dependent projects
+* Contributor rankings
 
-The dashboard can obtain a GitHub token in three different ways. Pick the one that fits your setup:
+---
 
-- **`device` (default)** — OAuth App + Device Flow, as described above. The token is stored under `~/.reposphere/` and refreshed via the in-app sign-in screen. Requires `GITHUB_CLIENT_ID`.
-- **`gh-cli`** — if you already use the [GitHub CLI](https://cli.github.com/), set `GH_AUTH_MODE=gh-cli` and the server will read the token by running `gh auth token` on each request (cached in-process for 60s). No OAuth App is needed; the scopes are whatever your `gh` session already has. Run `gh auth refresh -h github.com -s repo,read:org,project` if you need extra scopes.
-- **`token`** — bring-your-own personal access token. Set `GH_AUTH_MODE=token` and export `GITHUB_TOKEN=<your-pat>`. Useful for headless / CI-style deployments.
+## System Architecture
 
-In `gh-cli` and `token` modes the device-flow sign-in screen is hidden; the server treats the configured source as authoritative.
+RepoSphere is built using a modern full-stack architecture consisting of two primary components.
 
-Tokens and snapshots are persisted under `~/.reposphere/`. If you previously ran an older build that stored data in `~/.gh-issues-dashboard/`, the server migrates it automatically on first start.
+### Backend
 
-### Quick env setup
+A TypeScript-based Node.js server responsible for:
 
-```bash
-export GITHUB_CLIENT_ID=Iv1.xxxxxxxxxxxxxxxx
-# optional
-export OPENAI_API_KEY=sk-...
-```
+* GitHub authentication
+* API aggregation
+* Response caching
+* Data processing
+* Security handling
 
-## Install
+Authentication uses GitHub Device Flow and stores tokens locally without exposing them to the browser.
+
+### Frontend
+
+A React-powered single-page application that provides:
+
+* Interactive dashboards
+* Real-time project insights
+* Repository management views
+* Analytics visualizations
+
+---
+
+## Technology Stack
+
+| Category    | Technology                        |
+| ----------- | --------------------------------- |
+| Language    | TypeScript                        |
+| Frontend    | React 19, Vite                    |
+| Backend     | Node.js                           |
+| Testing     | Vitest                            |
+| Build Tools | TypeScript Compiler, Concurrently |
+
+---
+
+## Requirements
+
+Before running RepoSphere, ensure you have:
+
+* Node.js 20 or newer
+* A GitHub OAuth Application with Device Flow enabled
+* (Optional) OpenAI API Key for AI-generated summaries
+
+---
+
+## Installation
+
+Clone the repository and install dependencies:
 
 ```bash
 npm install
 ```
 
-## Run in development
-
-Starts the API server (with file-watch reload) and the Vite dev server in parallel. The Vite dev server proxies `/api` to the backend on port `8765`.
+Start the development environment:
 
 ```bash
 npm run dev
 ```
 
-Then open <http://127.0.0.1:5173>. On first launch the UI will walk you through the GitHub Device Flow sign-in.
+Open:
 
-If you only want one of the two processes:
-
-```bash
-npm run api    # backend only, on http://127.0.0.1:8765
+```text
+http://127.0.0.1:5173
 ```
 
-## Build
+---
 
-Type-checks the server, compiles it to `dist/`, and produces the production frontend bundle under `dist/client/`:
+## Production Build
+
+Build the application:
 
 ```bash
 npm run build
 ```
 
-## Run the production build
-
-After `npm run build`, the Node server can serve both the API and the built SPA from a single port:
+Run the production server:
 
 ```bash
 npm start
-# or, equivalently
-npm run serve
 ```
 
-Then open <http://127.0.0.1:8765>.
+Access the application at:
 
-`npm run preview` is also available if you want to preview only the static frontend through Vite (no backend).
+```text
+http://127.0.0.1:8765
+```
 
-## Run with Docker
+---
 
-A multi-stage `Dockerfile` and a `docker-compose.yml` are provided. The image builds the server + SPA bundle and runs as a non-root user; tokens and snapshots are persisted to a named volume mounted at `/home/node/.reposphere`.
+## Docker Deployment
 
-If you already have an older compose file, make sure the persistent volume is mounted at `/home/node/.reposphere` and not the legacy `/home/node/.gh-issues-dashboard` path, otherwise the login state will not survive restarts.
-
-With Docker Compose (recommended):
+RepoSphere supports containerized deployment using Docker and Docker Compose.
 
 ```bash
-cat > .env <<'EOF'
-GITHUB_CLIENT_ID=Iv1.xxxxxxxxxxxxxxxx
-# Optional — enables AI-generated daily digest narratives
-OPENAI_API_KEY=sk-...
-# Optional overrides
-# OPENAI_DIGEST_MODEL=gpt-4.1-mini
-# GITHUB_OAUTH_SCOPES=repo read:org project read:user user:email
-EOF
 docker compose up -d --build
-# open http://127.0.0.1:8765
 ```
 
-With plain Docker:
+Persistent application data and authentication tokens are stored in dedicated Docker volumes.
+
+---
+
+## Authentication
+
+RepoSphere supports multiple authentication methods:
+
+### Device Flow (Recommended)
+
+Secure browser-based GitHub authentication.
+
+### GitHub CLI
+
+Reuse an existing GitHub CLI login session.
+
+### Personal Access Token
+
+Authenticate using a GitHub Personal Access Token for automated environments.
+
+---
+
+## Testing
+
+Run unit tests:
 
 ```bash
-docker build -t reposphere .
-docker run -d --name reposphere \
-  -p 8765:8765 \
-  -e GITHUB_CLIENT_ID=Iv1.xxxxxxxxxxxxxxxx \
-  -e OPENAI_API_KEY=sk-... \
-  -v reposphere-data:/home/node/.reposphere \
-  reposphere
+npm test
 ```
 
-The container forwards `GITHUB_CLIENT_ID`, `GITHUB_OAUTH_SCOPES`, `OPENAI_API_KEY` and `OPENAI_DIGEST_MODEL` from the host environment (or `.env` with Compose) — see [Configuration](#configuration) for the full list. It sets `HOST=0.0.0.0` so the server is reachable from outside. To wipe the stored token (full logout) remove the volume: `docker volume rm reposphere-data`.
-
-## Test & type-check
+Run type checking:
 
 ```bash
-npm test          # vitest run
-npm run typecheck # tsc --noEmit
+npm run typecheck
 ```
 
-Tests live under `tests/` and mirror the structure of `src/` (see [AGENTS.md](AGENTS.md)).
-
-## Project layout
-
-```
-.
-├── index.html                 # SPA entrypoint consumed by Vite
-├── src/
-│   ├── main.tsx               # React bootstrap
-│   ├── App.tsx                # Top-level component & routing
-│   ├── api/                   # Browser-side API client (calls /api/*)
-│   ├── components/            # UI: views, modals, common, sidebar, top bar
-│   ├── styles/                # CSS modules (tokens, layout, views, modals, …)
-│   ├── server.ts              # Node HTTP server entrypoint
-│   ├── server/                # OAuth, GitHub client, caches, digests, insights
-│   ├── types/github.ts        # Shared TypeScript types
-│   └── utils/                 # Pure logic (covered by unit tests)
-├── tests/                     # Vitest suites mirroring src/
-├── docs/                      # Contributor documentation
-├── public/                    # Static assets (demo media)
-├── vite.config.ts
-├── tsconfig.json              # Frontend TS config
-└── tsconfig.server.json       # Server TS config (build → dist/)
-```
-
-## Status
-
-Early scaffolding. APIs, modules, and the UI are still being shaped — expect rapid changes. Star the repo and join Discord to follow along.
-
-## Community
-
-- [Discord server](https://discord.gg/YrZPHAwMSG) — suggest features, report issues, or just say hi.
+---
 
 ## Contributing
 
-Before opening a PR, please skim [AGENTS.md](AGENTS.md) for the project conventions (English-only identifiers, pure logic in `src/utils/` with mirrored tests, no GitHub tokens on the browser, etc.) and run `npm test` + `npm run build`.
+Contributions are welcome.
+
+Before submitting changes:
+
+1. Follow project coding standards.
+2. Run tests locally.
+3. Verify builds complete successfully.
+4. Open a pull request with a clear description.
+
+---
 
 ## License
 
-MIT License — see [LICENSE](LICENSE).
+Released under the MIT License.
