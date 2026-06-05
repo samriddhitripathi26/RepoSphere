@@ -274,7 +274,3 @@ Before submitting changes:
 4. Open a pull request with a clear description.
 
 ---
-
-## License
-
-Released under the MIT License.
